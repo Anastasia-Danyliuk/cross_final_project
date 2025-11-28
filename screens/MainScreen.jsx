@@ -1,149 +1,152 @@
-import React from 'react';
-import {ScrollView, Text, View, StyleSheet, SafeAreaView, TouchableOpacity, Image} from "react-native";
+import React, { useEffect, useState } from 'react';
+import { ScrollView, Text, View, StyleSheet, SafeAreaView, TouchableOpacity, Image, ActivityIndicator } from "react-native";
 import SearchBar from '../components/SearchBar';
 import SongCard from '../components/SongCard';
 import LineSongCard from '../components/LineSongCard';
 
+import { getDeezerTracks } from "../api/api";
+
 export default function MainScreen({ navigation }) {
+
+    const [perfect, setPerfect] = useState([]);
+    const [repeat, setRepeat] = useState([]);
+    const [trend, setTrend] = useState([]);
+
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        async function loadData() {
+            try {
+                const tracks = await getDeezerTracks();
+
+                setPerfect(tracks.slice(0, 5));
+                setRepeat(tracks.slice(5, 15));
+                setTrend(tracks.slice(15, 25));
+
+            } catch (e) {
+                setError("Loading Error");
+                console.log(e);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        loadData();
+    }, []);
+
+    if (loading) {
+        return (
+            <SafeAreaView style={styles.center}>
+                <ActivityIndicator size="large" />
+            </SafeAreaView>
+        );
+    }
+    if (error) {
+        return (
+            <SafeAreaView style={styles.center}>
+                <Text>{error}</Text>
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={styles.safe}>
-        <ScrollView style={styles.screen}>
+            <ScrollView
+                style={styles.screen}
+                horizontal={false}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ flexGrow: 1 }}
+                overScrollMode="never"
+                bounces={false}
+            >
+
+
             <View style={styles.topBar}>
-            <TouchableOpacity
-                style={styles.drawer}
-                onPress={() => navigation.openDrawer()}>
-                <Image
-                    source={require('../assets/MenuIcon.png')}
-                    style={{ width: 24, height: 24 }}
-                />
-            </TouchableOpacity>
-            <View style={styles.searchBar}>
-                <SearchBar
-                    disabledInput={true}
-                    onPress={() => navigation.navigate('Search')}
-                    containerStyle={styles.searchBarContainer}
-                />
-            </View>
-            </View>
+                    <TouchableOpacity
+                        style={styles.drawer}
+                        onPress={() => navigation.openDrawer()}>
+                        <Image
+                            source={require('../assets/MenuIcon.png')}
+                            style={{ width: 24, height: 24 }}
+                        />
+                    </TouchableOpacity>
 
-            <Text style={styles.section}>Perfect for you</Text>
-            <ScrollView   horizontal
-                          showsHorizontalScrollIndicator={false}
-                          style={styles.container}>
-                <View style={styles.card}>
-                    <SongCard
-                        title="Fish on"
-                        singer="Till Lindemann"
-                        imgUrl="https://rammwiki.net/www/w/images/6/6f/Fish_On_cover.png"
-                        songUrl="https://www.youtube.com/watch?v=QVzjBPjJY7w"
-                    />
-                </View>
-                <View style={styles.card}>
-                    <SongCard
-                        style={styles.card}
-                        title="Wer weiß das schon"
-                        singer="Till Lindemann"
-                        imgUrl="https://www.nastylittleman.com/wp-content/uploads/2019/11/Screen-Shot-2019-10-31-at-1.09.54-PM.png"
-                        songUrl="https://www.youtube.com/watch?v=lZNb0E4vB5Y"
-                    />
+                    <View style={styles.searchBar}>
+                        <SearchBar
+                            disabledInput={true}
+                            onPress={() => navigation.navigate('Search')}
+                        />
+                    </View>
                 </View>
 
-               <View style={styles.card}>
-                   <SongCard
-                       style={styles.card}
-                       title="Keine Lust"
-                       singer="Rammstein"
-                       imgUrl="https://i.scdn.co/image/ab67616d0000b273952d246fd1eac33a1a2c2603"
-                       songUrl="https://youtu.be/rmmMZcly25o?si=wytl56vTFb-aH6vS"
-                   />
-               </View>
+                <Text style={styles.section}>Perfect for you</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.container}>
+                    {perfect.map(item => (
+                        <View key={item.id} style={styles.card}>
+                            <SongCard
+                                title={item.title}
+                                singer={item.artist.name}
+                                imgUrl={item.album.cover}
+                                songUrl={item.link}
+                            />
+                        </View>
+                    ))}
+                </ScrollView>
+
+                <Text style={styles.section}>On Repeat</Text>
+                <View style={styles.cardLine}>
+                    {repeat.map(item => (
+                        <LineSongCard
+                            key={item.id}
+                            title={item.title}
+                            singer={item.artist.name}
+                            imgUrl={item.album.cover}
+                            songUrl={item.link}
+                        />
+                    ))}
+                </View>
+
+                <Text style={styles.section}>On Trend</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.container}>
+                    {perfect.map(item => (
+                        <View key={item.id} style={styles.card}>
+                            <SongCard
+                                title={item.title}
+                                singer={item.artist.name}
+                                imgUrl={item.album.cover}
+                                songUrl={item.link}
+                            />
+                        </View>
+                    ))}
+                </ScrollView>
+
             </ScrollView>
-
-            <Text style={styles.section}>On Repeat</Text>
-
-            <View style={styles.cardLine}>
-                <LineSongCard
-                title="Donaukinder"
-                singer="Rammstein"
-                imgUrl="https://rammwiki.net/www/w/images/6/6f/Fish_On_cover.png"
-                songUrl="https://youtu.be/DGclueDSWD4?si=XBkzQ-Qx5s-fYIfe"
-            />
-
-              <LineSongCard
-                  title="Keine Lust"
-                  singer="Rammstein"
-                  imgUrl="https://i.scdn.co/image/ab67616d0000b273952d246fd1eac33a1a2c2603"
-                  songUrl="https://youtu.be/rmmMZcly25o?si=wytl56vTFb-aH6vS"
-              />
-
-                <LineSongCard
-                    title="Hallomann"
-                    singer="Rammstein"
-                    imgUrl="https://rammwiki.net/www/w/images/2/21/Rammstein_cover.png"
-                    songUrl="https://www.youtube.com/watch?v=HYTXWZQVPyM&t=2s"
-                />
-
-                <LineSongCard
-                    title="Deutschland "
-                    singer="Rammstein"
-                    imgUrl="https://upload.wikimedia.org/wikipedia/uk/f/fd/RammsteinDeutschlandSingleCover.jpg"
-                    songUrl="https://www.youtube.com/watch?v=NeQM1c-XCDc"
-                />
-
-          </View>
-
-            <Text style={styles.section}>On Trend</Text>
-
-            <ScrollView   horizontal
-                          showsHorizontalScrollIndicator={false}
-                          style={styles.container}>
-                <View style={styles.card}>
-                    <SongCard
-                        title="Und die Engel singen"
-                        singer="Till Lindemann"
-                        imgUrl="https://rammwiki.net/www/w/images/thumb/7/7a/UDES_cover.jpg/400px-UDES_cover.jpg"
-                        songUrl="https://www.youtube.com/watch?v=qMTxqc75Cko"
-                    />
-                </View>
-                <View style={styles.card}>
-                    <SongCard
-                        style={styles.card}
-                        title="Übers Meer"
-                        singer="Till Lindemann"
-                        imgUrl="https://cdn-images.dzcdn.net/images/cover/ec723f9a8ddfc2ffa6b7bf6aeeca85d1/0x1900-000000-80-0-0.jpg"
-                        songUrl="https://www.youtube.com/watch?v=lZNb0E4vB5Y"
-                    />
-                </View>
-
-                <View style={styles.card}>
-                    <SongCard
-                        style={styles.card}
-                        title="Keine Lust"
-                        singer="Rammstein"
-                        imgUrl="https://i.scdn.co/image/ab67616d0000b273952d246fd1eac33a1a2c2603"
-                        songUrl="https://youtu.be/rmmMZcly25o?si=wytl56vTFb-aH6vS"
-                    />
-                </View>
-            </ScrollView>
-        </ScrollView>
-            </SafeAreaView>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    safe:{
+    safe: {
         flex: 1,
     },
-    screen:{
+    screen: {
         paddingTop: 50,
+    },
+    center: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
     },
     container: {
         flexDirection: "row",
         paddingLeft: 16,
-
     },
-    card:{
+    card: {
         marginRight: 12,
+    },
+    cardLine: {
+        marginLeft: 12,
     },
     section: {
         fontFamily: 'Inter',
@@ -152,22 +155,21 @@ const styles = StyleSheet.create({
         paddingBottom: 16,
         paddingLeft: 16,
         paddingTop: 24,
-
     },
     topBar: {
         flexDirection: "row",
         alignItems: "center",
         paddingHorizontal: 16,
         paddingTop: 20,
+        width: "100%",
+        overflow: "hidden",
     },
-    searchBarContainer:{
+    searchBar: {
         marginLeft: 16,
+        flex: 1,
     },
-    drawer:{
+    drawer: {
         width: 24,
         paddingLeft: 5,
-    },
-    cardLine:{
-        marginLeft: 12,
     }
 });

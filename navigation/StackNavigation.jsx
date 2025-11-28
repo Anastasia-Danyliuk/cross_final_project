@@ -3,6 +3,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import DrawerNavigator from './DrawerNavigation';
 import SearchScreen from '../screens/SearchScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import SongDetailsScreen from '../screens/SongDetailsScreen';
 
 const Stack = createStackNavigator();
 
@@ -26,6 +27,9 @@ export default function StackNavigation() {
                 component={ProfileScreen}
                 options={{ headerShown: true, title: 'Profile' }}
             />
+            <Stack.Screen
+                name="Details"
+                component={SongDetailsScreen} />
         </Stack.Navigator>
     );
 }

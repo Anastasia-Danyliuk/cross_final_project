@@ -1,184 +1,146 @@
-import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
-import Switcher from '../components/Switcher';
+import React, { useEffect, useState } from "react";
+import {View, Text, StyleSheet, ActivityIndicator, FlatList} from "react-native";
+import { getDeezerTracks } from "../api/api";
+import Switcher from "../components/Switcher";
 import LineSongCard from "../components/LineSongCard";
 import SongCard from "../components/SongCard";
 
 export default function LibraryScreen() {
-    const [activeTab, setActiveTab] = useState('Saved');
 
-    const renderContent = () => {
-        if (activeTab === 'Saved') {
-            return (
-                <View>
+    const [activeTab, setActiveTab] = useState("Saved");
+    const [tracks, setTracks] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-                    <View style={styles.container}>
-                        <LineSongCard
-                            title="Donaukinder"
-                            singer="Rammstein"
-                            imgUrl="https://rammwiki.net/www/w/images/6/6f/Fish_On_cover.png"
-                            songUrl="https://youtu.be/DGclueDSWD4?si=XBkzQ-Qx5s-fYIfe"
-                        />
-
-                        <LineSongCard
-                            title="Keine Lust"
-                            singer="Rammstein"
-                            imgUrl="https://i.scdn.co/image/ab67616d0000b273952d246fd1eac33a1a2c2603"
-                            songUrl="https://youtu.be/rmmMZcly25o?si=wytl56vTFb-aH6vS"
-                        />
-
-                        <LineSongCard
-                            title="Hallomann"
-                            singer="Rammstein"
-                            imgUrl="https://rammwiki.net/www/w/images/2/21/Rammstein_cover.png"
-                            songUrl="https://www.youtube.com/watch?v=HYTXWZQVPyM&t=2s"
-                        />
-                    </View>
-
-
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        style={styles.container}
-                    >
-                        <View style={styles.card}>
-                            <SongCard
-                                title="Fish on"
-                                singer="Till Lindemann"
-                                imgUrl="https://rammwiki.net/www/w/images/6/6f/Fish_On_cover.png"
-                                songUrl="https://www.youtube.com/watch?v=QVzjBPjJY7w"
-                            />
-                        </View>
-
-                        <View style={styles.card}>
-                            <SongCard
-                                title="Wer weiß das schon"
-                                singer="Till Lindemann"
-                                imgUrl="https://www.nastylittleman.com/wp-content/uploads/2019/11/Screen-Shot-2019-10-31-at-1.09.54-PM.png"
-                                songUrl="https://www.youtube.com/watch?v=lZNb0E4vB5Y"
-                            />
-                        </View>
-
-                        <View style={styles.card}>
-                            <SongCard
-                                title="Keine Lust"
-                                singer="Rammstein"
-                                imgUrl="https://i.scdn.co/image/ab67616d0000b273952d246fd1eac33a1a2c2603"
-                                songUrl="https://youtu.be/rmmMZcly25o?si=wytl56vTFb-aH6vS"
-                            />
-                        </View>
-                    </ScrollView>
-
-                </View>
-            );
+    useEffect(() => {
+        async function loadTracks() {
+            try {
+                const data = await getDeezerTracks();
+                setTracks(data);
+            } catch (e) {
+                setError("Loading error");
+            } finally {
+                setLoading(false);
+            }
         }
 
-        if (activeTab === 'Liked') {
-            return (
-                <View style={styles.container}>
-                    <LineSongCard
-                        title="Donaukinder"
-                        singer="Rammstein"
-                        imgUrl="https://rammwiki.net/www/w/images/6/6f/Fish_On_cover.png"
-                        songUrl="https://youtu.be/DGclueDSWD4?si=XBkzQ-Qx5s-fYIfe"
-                    />
+        loadTracks();
+    }, []);
 
-                    <LineSongCard
-                        title="Keine Lust"
-                        singer="Rammstein"
-                        imgUrl="https://i.scdn.co/image/ab67616d0000b273952d246fd1eac33a1a2c2603"
-                        songUrl="https://youtu.be/rmmMZcly25o?si=wytl56vTFb-aH6vS"
-                    />
+    if (loading) {
+        return (
+            <View style={styles.center}>
+                <ActivityIndicator size="large" />
+            </View>
+        );
+    }
 
-                    <LineSongCard
-                        title="Hallomann"
-                        singer="Rammstein"
-                        imgUrl="https://rammwiki.net/www/w/images/2/21/Rammstein_cover.png"
-                        songUrl="https://www.youtube.com/watch?v=HYTXWZQVPyM&t=2s"
-                    />
-                    <LineSongCard
-                        title="Keine Lust"
-                        singer="Rammstein"
-                        imgUrl="https://i.scdn.co/image/ab67616d0000b273952d246fd1eac33a1a2c2603"
-                        songUrl="https://youtu.be/rmmMZcly25o?si=wytl56vTFb-aH6vS"
-                    />
+    if (error) {
+        return (
+            <View style={styles.center}>
+                <Text>{error}</Text>
+            </View>
+        );
+    }
 
-                    <LineSongCard
-                        title="Hallomann"
-                        singer="Rammstein"
-                        imgUrl="https://rammwiki.net/www/w/images/2/21/Rammstein_cover.png"
-                        songUrl="https://www.youtube.com/watch?v=HYTXWZQVPyM&t=2s"
-                    />
-                    <LineSongCard
-                        title="Keine Lust"
-                        singer="Rammstein"
-                        imgUrl="https://i.scdn.co/image/ab67616d0000b273952d246fd1eac33a1a2c2603"
-                        songUrl="https://youtu.be/rmmMZcly25o?si=wytl56vTFb-aH6vS"
-                    />
+    let content = null;
 
+    if (activeTab === "Saved") {
+        content = (
+            <FlatList
+                data={tracks.slice(0, 10)}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item }) => (
                     <LineSongCard
-                        title="Hallomann"
-                        singer="Rammstein"
-                        imgUrl="https://rammwiki.net/www/w/images/2/21/Rammstein_cover.png"
-                        songUrl="https://www.youtube.com/watch?v=HYTXWZQVPyM&t=2s"
+                        title={item.title}
+                        singer={item.artist.name}
+                        imgUrl={item.album.cover}
+                        songUrl={item.link}
                     />
-                </View>
-            );
-        }
+                )}
+                contentContainerStyle={styles.savedList}
+            />
+        );
+    }
 
-        if (activeTab === 'Albums') {
-            return (
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.container}
-                >
-                    <View style={styles.card}>
+    if (activeTab === "Liked") {
+        content = (
+            <FlatList
+                data={tracks.slice(10, 20)}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item }) => (
+                    <LineSongCard
+                        title={item.title}
+                        singer={item.artist.name}
+                        imgUrl={item.album.cover}
+                        songUrl={item.link}
+                    />
+                )}
+                contentContainerStyle={styles.likedList}
+            />
+        );
+    }
+
+    if (activeTab === "Albums") {
+        content = (
+            <FlatList
+                horizontal
+                data={tracks.slice(0, 8)}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item }) => (
+                    <View style={styles.albumItem}>
                         <SongCard
-                            title="Fish on"
-                            singer="Till Lindemann"
-                            imgUrl="https://rammwiki.net/www/w/images/6/6f/Fish_On_cover.png"
-                            songUrl="https://www.youtube.com/watch?v=QVzjBPjJY7w"
+                            title={item.title}
+                            singer={item.artist.name}
+                            imgUrl={item.album.cover_big}
+                            songUrl={item.link}
                         />
                     </View>
-
-                    <View style={styles.card}>
-                        <SongCard
-                            title="Wer weiß das schon"
-                            singer="Till Lindemann"
-                            imgUrl="https://www.nastylittleman.com/wp-content/uploads/2019/11/Screen-Shot-2019-10-31-at-1.09.54-PM.png"
-                            songUrl="https://www.youtube.com/watch?v=lZNb0E4vB5Y"
-                        />
-                    </View>
-
-                    <View style={styles.card}>
-                        <SongCard
-                            title="Keine Lust"
-                            singer="Rammstein"
-                            imgUrl="https://i.scdn.co/image/ab67616d0000b273952d246fd1eac33a1a2c2603"
-                            songUrl="https://youtu.be/rmmMZcly25o?si=wytl56vTFb-aH6vS"
-                        />
-                    </View>
-                </ScrollView>
-            );
-        }
-    };
+                )}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.albumList}
+            />
+        );
+    }
 
     return (
-        <ScrollView style={{ padding: 20 }}>
-            <Switcher style = {{paddingLeft:32}} activeTab={activeTab} setActiveTab={setActiveTab} />
-            <View style={{ marginTop: 30}}>
-                {renderContent()}
-            </View>
-        </ScrollView>
+        <View style={styles.container}>
+            <Switcher activeTab={activeTab} setActiveTab={setActiveTab} />
+            <View style={styles.contentWrapper}>{content}</View>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
-        gap: 20
+        padding: 20,
+        flex: 1,
     },
-    card: {
+
+    center: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+
+    contentWrapper: {
+        marginTop: 30,
+        flex: 1,
+    },
+
+    savedList: {
+        gap: 20,
+    },
+
+    likedList: {
+        gap: 20,
+    },
+
+    albumList: {
+        paddingRight: 14,
+    },
+
+    albumItem: {
         marginRight: 14,
-    }
+    },
 });

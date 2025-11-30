@@ -32,8 +32,11 @@ const SongCard = ({ imgUrl, title, singer, songUrl, id, onRemove }) => {
             </View>
             <TouchableOpacity style={styles.container} onPress={handlePlay} activeOpacity={0.8}>
                 <Image style={styles.image} source={{ uri: imgUrl }} />
-                <Text style={styles.title}>{title}</Text>
-                <Text style={styles.singer}>{singer}</Text>
+
+                <View style={styles.textContainer}>
+                    <Text style={styles.title}>{title}</Text>
+                    <Text style={styles.singer}>{singer}</Text>
+                </View>
             </TouchableOpacity>
         </View>
     );
@@ -79,18 +82,20 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         marginBottom: 8,
     },
+    textContainer: {
+        paddingHorizontal: 8,
+        width: '100%',
+    },
     title: {
         fontWeight: '700',
         fontSize: 14,
         color: '#1F2024',
-        marginLeft: 8,
         marginBottom: 2,
     },
     singer: {
         fontWeight: '400',
         fontSize: 12,
         color: '#71727A',
-        marginLeft: 8,
         marginBottom: 4,
     },
 });

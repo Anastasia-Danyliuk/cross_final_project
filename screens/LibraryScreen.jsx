@@ -1,5 +1,5 @@
-import React, {useContext, useEffect, useState} from "react";
-import { View, Text, StyleSheet, ActivityIndicator, FlatList } from "react-native";
+import React, { useContext, useEffect, useState, useCallback } from "react";
+import { View, Text, StyleSheet, ActivityIndicator, FlatList, LayoutAnimation, Platform, UIManager} from "react-native";
 import { useSelector, useDispatch } from "react-redux";
 import { getDeezerTracks } from "../api/api";
 import Switcher from "../components/Switcher";
@@ -9,14 +9,32 @@ import { ThemeContext } from "../context/ThemeContext";
 import { removeFromFavorites, removeFromSaved } from "../redux/tracksSlice";
 
 
-export default function LibraryScreen() {
+if (
+    Platform.OS === 'android' &&
+    UIManager.setLayoutAnimationEnabledExperimental
+) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+const mapTrack = (track, index) => {
+    const id = track && track.id ? String(track.id) : "tmp_" + index;
+    const title = track && (track.title || track.name) ? (track.title || track.name) : "Unknown";
+    const singer = track && (track.singer || (track.artist && track.artist.name)) ? (track.singer || track.artist.name) : "Unknown";
+    const imgUrl = track && (track.imgUrl || (track.album && track.album.cover_big)) ? (track.imgUrl || track.album.cover_big) : "";
+    const songUrl = track && (track.songUrl || track.link) ? (track.songUrl || track.link) : "";
+
+    return {id, title, singer, imgUrl, songUrl};
+};
+
+
+export function LibraryScreen() {
+
     const [activeTab, setActiveTab] = useState("Saved");
     const [tracks, setTracks] = useState([]);
     const [loading, setLoading] = useState(true);
-
     const [error, setError] = useState(null);
 
-    const { theme } = useContext(ThemeContext);
+    const {theme} = useContext(ThemeContext);
     const isDark = theme === "dark";
 
     const dispatch = useDispatch();
@@ -39,44 +57,21 @@ export default function LibraryScreen() {
                 setLoading(false);
             }
         }
+
         load();
     }, []);
 
-    function mapTrack(track, index) {
-        const id = track && track.id ? String(track.id) : "tmp_" + index;
-        const title = track && (track.title || track.name) ? (track.title || track.name) : "Unknown";
-        const singer = track && (track.singer || (track.artist && track.artist.name)) ? (track.singer || track.artist.name) : "Unknown";
-        const imgUrl = track && (track.imgUrl || (track.album && track.album.cover_big)) ? (track.imgUrl || track.album.cover_big) : "";
-        const songUrl = track && (track.songUrl || track.link) ? (track.songUrl || track.link) : "";
-
-        return { id, title, singer, imgUrl, songUrl };
-    }
-
-    const handleRemoveFromSaved = (trackId) => {
+    const handleRemoveFromSaved = useCallback((trackId) => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
         dispatch(removeFromSaved(trackId));
-    };
+    }, [dispatch]);
 
-    const handleRemoveFromFavorites = (trackId) => {
+    const handleRemoveFromFavorites = useCallback((trackId) => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
         dispatch(removeFromFavorites(trackId));
-    };
+    }, [dispatch]);
 
-    if (loading) {
-        return (
-            <View style={[styles.center, { backgroundColor: isDark ? "#444444" : "#fff" }]}>
-                <ActivityIndicator size="large" />
-            </View>
-        );
-    }
-
-    if (error) {
-        return (
-            <View style={[styles.center, { backgroundColor: isDark ? "#444444" : "#fff" }]}>
-                <Text>{error}</Text>
-            </View>
-        );
-    }
-
-    function renderContent() {
+    const renderContent = () => {
         let data = [];
         let emptyMessage = "Any songs";
         let onRemoveHandler = null;
@@ -97,7 +92,7 @@ export default function LibraryScreen() {
         if (!Array.isArray(data) || data.length === 0) {
             return (
                 <View style={styles.center}>
-                    <Text>{emptyMessage}</Text>
+                    <Text style={{ color: isDark ? "#ffffff" : "#000000" }}>{emptyMessage}</Text>
                 </View>
             );
         }
@@ -106,11 +101,12 @@ export default function LibraryScreen() {
             <FlatList
                 horizontal={activeTab === "Albums"}
                 data={data}
-                keyExtractor={(item, index) => (item && item.id ? item.id : "item") + "_" + index}
-                ItemSeparatorComponent={() => <View style={{ width: 15 }} />}
-                renderItem={({ item }) => {
+                keyExtractor={(item, index) => (item.id || String(index))}
+                ItemSeparatorComponent={() => <View style={{width: 15}}/>}
+                renderItem={({item}) => {
                     if (activeTab === "Albums") {
-                        return <SongCard id={item.id} title={item.title} singer={item.singer} imgUrl={item.imgUrl} songUrl={item.songUrl}/>;
+                        return <SongCard id={item.id} title={item.title} singer={item.singer} imgUrl={item.imgUrl}
+                                         songUrl={item.songUrl}/>;
                     } else {
                         return (
                             <LineSongCard
@@ -126,11 +122,28 @@ export default function LibraryScreen() {
                 }}
             />
         );
+    };
+
+
+    if (loading) {
+        return (
+            <View style={[styles.center, {backgroundColor: isDark ? "#444444" : "#fff"}]}>
+                <ActivityIndicator size="large" color={isDark ? "#ffffff" : "#000000"}/>
+            </View>
+        );
+    }
+
+    if (error) {
+        return (
+            <View style={[styles.center, {backgroundColor: isDark ? "#444444" : "#fff"}]}>
+                <Text style={{ color: isDark ? "#ffffff" : "#000000" }}>{error}</Text>
+            </View>
+        );
     }
 
     return (
-        <View style={[styles.container, { backgroundColor: isDark ? "#444444" : "#fff" }]}>
-            <Switcher activeTab={activeTab} setActiveTab={setActiveTab} />
+        <View style={[styles.container, {backgroundColor: isDark ? "#444444" : "#fff"}]}>
+            <Switcher activeTab={activeTab} setActiveTab={setActiveTab}/>
             <View style={styles.contentWrapper}>
                 {renderContent()}
             </View>

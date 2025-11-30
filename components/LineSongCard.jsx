@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, Linking, Dimensions, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch } from 'react-redux';
@@ -10,27 +10,32 @@ const CARD_HEIGHT = 50;
 const IMAGE_WIDTH = CARD_WIDTH * 0.23;
 
 const LineSongCard = ({ imgUrl, title, singer, songUrl, id, onRemove }) => {
+
     const dispatch = useDispatch();
 
     const safeId = id !== undefined && id !== null ? String(id) : `tmp_${Math.floor(Math.random() * 100000)}`;
 
-    const handlePlay = () => {
+    const handlePlay = useCallback(() => {
         if (songUrl) {
             Linking.openURL(songUrl);
         }
-    };
+    }, [songUrl]);
 
-    const onLike = () => {
+    const onLike = useCallback(() => {
         const payload = { id: safeId, title: title || 'Unknown', singer: singer || 'Unknown', imgUrl: imgUrl || '' };
         console.log('Dispatching addToFavorites with payload:', payload);
         dispatch(addToFavorites(payload));
-    };
+    }, [safeId, title, singer, imgUrl, dispatch]);
 
-    const onSave = () => {
+    const onSave = useCallback(() => {
         const payload = { id: safeId, title: title || 'Unknown', singer: singer || 'Unknown', imgUrl: imgUrl || '' };
         console.log('Dispatching saveTrack with payload:', payload);
         dispatch(saveTrack(payload));
-    };
+    }, [safeId, title, singer, imgUrl, dispatch]);
+
+    const handleRemove = onRemove ? useCallback(() => {
+        onRemove(safeId);
+    }, [onRemove, safeId]) : null;
 
     return (
         <View style={styles.wrapper}>
@@ -44,7 +49,7 @@ const LineSongCard = ({ imgUrl, title, singer, songUrl, id, onRemove }) => {
                 </TouchableOpacity>
 
                 {onRemove && (
-                    <TouchableOpacity onPress={() => onRemove(safeId)}>
+                    <TouchableOpacity onPress={handleRemove}>
                         <Ionicons name="close-circle-outline" size={20} color="#999999" />
                     </TouchableOpacity>
                 )}
@@ -122,4 +127,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default LineSongCard;
+export default memo(LineSongCard);

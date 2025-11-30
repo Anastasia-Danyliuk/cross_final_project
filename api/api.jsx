@@ -1,17 +1,23 @@
-import axios from "axios";
-
 const API_URL =
     "https://cors-anywhere.herokuapp.com/https://api.deezer.com/chart/0/tracks";
 
 export const getDeezerTracks = async () => {
     try {
-        const res = await axios.get(API_URL, {
+        const response = await fetch(API_URL, {
+            method: "GET",
             headers: {
                 "X-Requested-With": "XMLHttpRequest",
             },
         });
 
-        return res.data.data;
+        if (!response.ok) {
+            throw new Error(`HTTP Error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        return data.data;
+
     } catch (error) {
         console.log("Deezer API error:", error);
         throw error;

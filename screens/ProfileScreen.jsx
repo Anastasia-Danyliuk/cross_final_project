@@ -1,7 +1,8 @@
 import React, { useContext } from 'react';
-import { SafeAreaView, View, Text, Button, StyleSheet } from 'react-native';
+import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { ThemeContext } from '../context/ThemeContext';
 import Profile from '../components/Profile';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function ProfileScreen() {
     const ctx = useContext(ThemeContext);
@@ -9,26 +10,50 @@ export default function ProfileScreen() {
     if (!ctx) {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: '#fff' }]}>
-                <Text style={{ color: '#444444' }}>ThemeContext не знайдено</Text>
+                <Text style={{ color: '#444444' }}>Error</Text>
             </SafeAreaView>
         );
     }
 
     const { theme, handleThemeChange } = ctx;
-    const backgroundColor = theme === 'light' ? '#ffffff' : '#444444';
-    const textColor = theme === 'light' ? '#444444' : '#ffffff';
+
+    const screenBgColor = theme === 'light' ? '#ffffff' : '#222222';
+    const textColor = theme === 'light' ? '#1F2024' : '#E5E5E5';
+    const secondaryTextColor = theme === 'light' ? '#71727A' : '#A0A0A0';
+    const switchBgColor = theme === 'light' ? '#F0F0F0' : '#333333';
+    const accentColor = "#3A7DFF";
 
     const onPressChange = () => {
         if (typeof handleThemeChange === 'function') handleThemeChange();
     };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor }]}>
+        <SafeAreaView style={[styles.container, { backgroundColor: screenBgColor }]}>
             <Profile />
-            <View style={styles.controls}>
-                <Text style={[styles.text, { color: textColor }]}>Current theme: {theme}</Text>
-                <Button title="Change Theme" onPress={onPressChange} />
+
+            <View style={styles.switchBlock}>
+                <Text style={[styles.switchTitle, { color: secondaryTextColor }]}>Appearance</Text>
+
+                <View style={[styles.themeSwitchContainer, { backgroundColor: switchBgColor }]}>
+                    <Text style={[styles.themeLabel, { color: textColor }]}>Theme</Text>
+
+                    <TouchableOpacity
+                        style={[styles.themeButton, { backgroundColor: theme === 'dark' ? accentColor : 'transparent' }]}
+                        onPress={onPressChange}
+                    >
+                        <Ionicons
+                            name={theme === 'dark' ? "moon" : "sunny"}
+                            size={20}
+                            color={theme === 'dark' ? '#fff' : textColor}
+                        />
+                        <Text style={[styles.themeText, { color: theme === 'dark' ? '#fff' : textColor }]}>
+                            {theme === 'dark' ? "Dark" : "Light"}
+                        </Text>
+                    </TouchableOpacity>
+
+                </View>
             </View>
+
         </SafeAreaView>
     );
 }
@@ -36,13 +61,42 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 20
+        paddingHorizontal: 20,
+        paddingTop: 10,
     },
-    controls: {
-        marginTop: 10
+    switchBlock: {
+        marginTop: 20,
+        paddingHorizontal: 12,
     },
-    text: {
+    switchTitle: {
+        fontSize: 14,
+        fontWeight: '600',
+        marginBottom: 8,
+    },
+    themeSwitchContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 10,
+        borderRadius: 12,
+        height: 50,
+    },
+    themeLabel: {
         fontSize: 16,
-        marginBottom: 12
+        fontWeight: '500',
     },
+    themeButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 5,
+        borderRadius: 8,
+        minWidth: 90,
+        justifyContent: 'space-around',
+    },
+    themeText: {
+        fontSize: 16,
+        fontWeight: '600',
+        marginLeft: 5,
+    }
 });

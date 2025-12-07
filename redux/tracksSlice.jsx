@@ -1,42 +1,46 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice } from '@reduxjs/toolkit';
+
+const initialState = {
+    favorites: [],
+    saved: [],
+};
 
 const tracksSlice = createSlice({
-    name: "tracks",
-    initialState: {
-        favorites: [],
-        saved: [],
-    },
+    name: 'tracks',
+    initialState,
     reducers: {
-        addToFavorites: (state, action) => {
-            const payload = action.payload;
-            const track = (payload && typeof payload === 'object') ? payload : { id: String(payload) };
-            if (!track.id) return;
-            const exists = state.favorites.find(t => t && t.id === track.id);
-            if (!exists) {
-                state.favorites = [...state.favorites, track];
-            }
-        },
-        removeFromFavorites: (state, action) => {
-            const payload = action.payload;
-            const trackId = (payload && payload.id) ? payload.id : String(payload);
-            state.favorites = state.favorites.filter(t => t && t.id !== trackId);
-        },
         saveTrack: (state, action) => {
-            const payload = action.payload;
-            const track = (payload && typeof payload === 'object') ? payload : { id: String(payload) };
-            if (!track.id) return;
-            const exists = state.saved.find(t => t && t.id === track.id);
+            const newTrack = action.payload;
+            const trackId = String(newTrack.id);
+            const exists = state.saved.some(track => String(track.id) === trackId);
+
             if (!exists) {
-                state.saved = [...state.saved, track];
+                state.saved.push({ ...newTrack, id: trackId });
             }
         },
+
+        addToFavorites: (state, action) => {
+            const newTrack = action.payload;
+            const trackId = String(newTrack.id);
+            const exists = state.favorites.some(track => String(track.id) === trackId);
+
+            if (!exists) {
+                state.favorites.push({ ...newTrack, id: trackId });
+            }
+        },
+
         removeFromSaved: (state, action) => {
-            const payload = action.payload;
-            const trackId = (payload && payload.id) ? payload.id : String(payload);
-            state.saved = state.saved.filter(t => t && t.id !== trackId);
+            const idToRemove = String(action.payload);
+            state.saved = state.saved.filter(track => String(track.id) !== idToRemove);
+        },
+
+        removeFromFavorites: (state, action) => {
+            const idToRemove = String(action.payload);
+            state.favorites = state.favorites.filter(track => String(track.id) !== idToRemove);
         },
     },
 });
 
-export const { addToFavorites, removeFromFavorites, saveTrack, removeFromSaved } = tracksSlice.actions;
+export const { saveTrack, addToFavorites, removeFromSaved, removeFromFavorites } = tracksSlice.actions;
+
 export default tracksSlice.reducer;

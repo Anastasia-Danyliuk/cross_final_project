@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState, useCallback } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, FlatList, LayoutAnimation, Platform, UIManager} from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, FlatList, LayoutAnimation, Platform, UIManager, Dimensions} from "react-native";
 import { useSelector, useDispatch } from "react-redux";
 import { getDeezerTracks } from "../api/api";
 import Switcher from "../components/Switcher";
@@ -8,6 +8,8 @@ import SongCard from "../components/SongCard";
 import { ThemeContext } from "../context/ThemeContext";
 import { removeFromFavorites, removeFromSaved } from "../redux/tracksSlice";
 
+
+const NUM_COLUMNS = 2;
 
 if (
     Platform.OS === 'android' &&
@@ -33,9 +35,12 @@ export function LibraryScreen() {
     const [tracks, setTracks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
     const {theme} = useContext(ThemeContext);
     const isDark = theme === "dark";
+    const screenBgColor = isDark ? "#222222" : "#fff";
+    const mainTextColor = isDark ? "#E5E5E5" : "#000000";
+    const accentColor = "#3A7DFF";
+
 
     const dispatch = useDispatch();
 
@@ -76,37 +81,56 @@ export function LibraryScreen() {
         let emptyMessage = "Any songs";
         let onRemoveHandler = null;
 
+        const isAlbumsTab = activeTab === "Albums";
+
         if (activeTab === "Saved") {
-            data = Array.isArray(saved) ? saved.map(mapTrack) : [];
+            data = Array.isArray(saved) ? saved : [];
             emptyMessage = "Any saved songs";
             onRemoveHandler = handleRemoveFromSaved;
         } else if (activeTab === "Liked") {
-            data = Array.isArray(favorites) ? favorites.map(mapTrack) : [];
+            data = Array.isArray(favorites) ? favorites : [];
             emptyMessage = "Any liked songs";
             onRemoveHandler = handleRemoveFromFavorites;
-        } else if (activeTab === "Albums") {
-            data = Array.isArray(tracks) ? tracks.slice(0, 8).map(mapTrack) : [];
+        } else if (isAlbumsTab) {
+            data = Array.isArray(tracks) ? tracks.map(mapTrack) : [];
             emptyMessage = "Any albums";
         }
 
         if (!Array.isArray(data) || data.length === 0) {
             return (
                 <View style={styles.center}>
-                    <Text style={{ color: isDark ? "#ffffff" : "#000000" }}>{emptyMessage}</Text>
+                    <Text style={{ color: mainTextColor }}>{emptyMessage}</Text>
                 </View>
             );
         }
 
         return (
             <FlatList
-                horizontal={activeTab === "Albums"}
+                key={isAlbumsTab ? 'grid' : 'list'}
+                numColumns={isAlbumsTab ? NUM_COLUMNS : 1}
+
+                contentContainerStyle={isAlbumsTab ? styles.albumsGrid : styles.listContainer}
+
+                style={{ flex: 1 }}
+
                 data={data}
-                keyExtractor={(item, index) => (item.id || String(index))}
-                ItemSeparatorComponent={() => <View style={{width: 15}}/>}
+                keyExtractor={(item, index) => (item.id ? String(item.id) : String(index))}
+
+                ItemSeparatorComponent={() => isAlbumsTab ? null : <View style={{height: 15}}/>}
+
                 renderItem={({item}) => {
-                    if (activeTab === "Albums") {
-                        return <SongCard id={item.id} title={item.title} singer={item.singer} imgUrl={item.imgUrl}
-                                         songUrl={item.songUrl}/>;
+                    if (isAlbumsTab) {
+                        return (
+                            <View style={styles.albumItemWrapper}>
+                                <SongCard
+                                    id={item.id}
+                                    title={item.title}
+                                    singer={item.singer}
+                                    imgUrl={item.imgUrl}
+                                    songUrl={item.songUrl}
+                                />
+                            </View>
+                        );
                     } else {
                         return (
                             <LineSongCard
@@ -127,22 +151,22 @@ export function LibraryScreen() {
 
     if (loading) {
         return (
-            <View style={[styles.center, {backgroundColor: isDark ? "#444444" : "#fff"}]}>
-                <ActivityIndicator size="large" color={isDark ? "#ffffff" : "#000000"}/>
+            <View style={[styles.center, {backgroundColor: screenBgColor}]}>
+                <ActivityIndicator size="large" color={isDark ? mainTextColor : accentColor}/>
             </View>
         );
     }
 
     if (error) {
         return (
-            <View style={[styles.center, {backgroundColor: isDark ? "#444444" : "#fff"}]}>
-                <Text style={{ color: isDark ? "#ffffff" : "#000000" }}>{error}</Text>
+            <View style={[styles.center, {backgroundColor: screenBgColor}]}>
+                <Text style={{ color: mainTextColor }}>{error}</Text>
             </View>
         );
     }
 
     return (
-        <View style={[styles.container, {backgroundColor: isDark ? "#444444" : "#fff"}]}>
+        <View style={[styles.container, {backgroundColor: screenBgColor}]}>
             <Switcher activeTab={activeTab} setActiveTab={setActiveTab}/>
             <View style={styles.contentWrapper}>
                 {renderContent()}
@@ -154,7 +178,8 @@ export function LibraryScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 20
+        paddingHorizontal: 16,
+        paddingTop: 10,
     },
     contentWrapper: {
         flex: 1,
@@ -165,4 +190,17 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center"
     },
+    albumItemWrapper: {
+        width: Dimensions.get('window').width / 2 - 24,
+        margin: 8,
+        alignItems: 'center',
+    },
+    albumsGrid: {
+        paddingHorizontal: 0,
+        justifyContent: 'flex-start',
+    },
+    listContainer: {
+        paddingHorizontal: 0,
+        paddingTop: 5,
+    }
 });

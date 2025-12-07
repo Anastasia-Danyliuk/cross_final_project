@@ -18,7 +18,6 @@ export default function SongDetailsScreen({ route }) {
                 if (!response.ok) {
                     throw new Error(`HTTP Error! Status: ${response.status}`);
                 }
-
                 const data = await response.json();
                 setSong(data);
             } catch (error) {

@@ -1,20 +1,42 @@
-import React from 'react';
-import { StyleSheet, TextInput, View, Image, TouchableOpacity } from 'react-native';
+import React, { useContext } from 'react';
+import { StyleSheet, TextInput, View, Image, TouchableOpacity, Keyboard } from 'react-native';
+import {Ionicons} from "@expo/vector-icons";
+import { ThemeContext } from "../context/ThemeContext";
 
-const SearchBar = ({ onPress, disabledInput, style, containerStyle, ...props }) => {
+const SearchBar = ({ onPress, disabledInput, style, containerStyle, onSearch, ...props }) => {
     const [text, onChangeText] = React.useState('');
+    const { theme } = useContext(ThemeContext);
+    const isDark = theme === "dark";
+
+    const searchBgColor = isDark ? '#333333' : '#F8F9FE';
+    const searchTextColor = isDark ? '#E5E5E5' : '#1F2024';
+    const searchPlaceholderColor = isDark ? '#A0A0A0' : '#71727A';
+
+
+    const handleSearch = () => {
+        if (onSearch) {
+            onSearch(text);
+        }
+        Keyboard.dismiss();
+    };
 
     const Content = (
-        <View style={[styles.container, containerStyle, style]}>
-            <Image source={require('../assets/SearchIcon.png')} style={styles.icon} />
-
+        <View style={[styles.container, containerStyle, style, { backgroundColor: searchBgColor }]}>
             <TextInput
-                style={styles.input}
+                style={[styles.input, { color: searchTextColor }]}
                 editable={!disabledInput}
                 onChangeText={onChangeText}
                 value={text}
                 placeholder="Search"
+                placeholderTextColor={searchPlaceholderColor}
+                returnKeyType="search"
+                onSubmitEditing={handleSearch}
             />
+
+            <TouchableOpacity onPress={handleSearch} activeOpacity={0.7}>
+                <Ionicons name="search" size={16} color="#3A7DFF" />
+            </TouchableOpacity>
+
         </View>
     );
 
@@ -33,17 +55,11 @@ const styles = StyleSheet.create({
         alignItems: "center",
         width: 343,
         height: 44,
-        backgroundColor: '#F8F9FE',
         borderRadius: 24,
         paddingHorizontal: 16,
     },
     input: {
         flex: 1,
-        marginLeft: 10,
-    },
-    icon: {
-        width: 16,
-        height: 16,
     }
 });
 

@@ -1,11 +1,13 @@
 import React, {useContext, useEffect, useState} from 'react';
-import { ScrollView, Text, View, StyleSheet, SafeAreaView, TouchableOpacity, Image, ActivityIndicator } from "react-native";
+import { ScrollView, Text, View, StyleSheet, SafeAreaView, TouchableOpacity, Image, ActivityIndicator, Dimensions } from "react-native";
 import SearchBar from '../components/SearchBar';
 import SongCard from '../components/SongCard';
 import LineSongCard from '../components/LineSongCard';
 import { ThemeContext } from "../context/ThemeContext";
-
 import { getDeezerTracks } from "../api/api";
+import {Ionicons} from "@expo/vector-icons";
+
+const SMALL_CARD_WIDTH = 120;
 
 export default function MainScreen({ navigation }) {
 
@@ -19,14 +21,38 @@ export default function MainScreen({ navigation }) {
     const { theme } = useContext(ThemeContext);
     const isDark = theme === "dark";
 
+    const screenBgColor = isDark ? "#222222" : "#fff";
+    const mainTextColor = isDark ? "#E5E5E5" : "#000";
+    const subTextColor = isDark ? "#A0A0A0" : "#777777";
+    const accentColor = "#3A7DFF";
+
+
     useEffect(() => {
         async function loadData() {
             try {
                 const tracks = await getDeezerTracks();
+                const total = tracks.length;
+                const COUNT = 4;
 
-                setPerfect(tracks.slice(0, 5));
-                setRepeat(tracks.slice(5, 15));
-                setTrend(tracks.slice(15, 25));
+                setPerfect(tracks.slice(0, COUNT));
+
+                const repeatEnd = Math.min(total, COUNT * 2);
+                setRepeat(tracks.slice(COUNT, repeatEnd));
+
+                const trendStart = COUNT * 2;
+                const trendEnd = COUNT * 3;
+
+                let trendData = [];
+
+                if (total > trendStart) {
+                    trendData = tracks.slice(trendStart, trendEnd);
+                } else if (total > COUNT) {
+                    trendData = tracks.slice(COUNT, total);
+                } else {
+                    trendData = tracks.slice(0, total);
+                }
+
+                setTrend(trendData);
 
             } catch (e) {
                 setError("Loading Error");
@@ -41,39 +67,34 @@ export default function MainScreen({ navigation }) {
 
     if (loading) {
         return (
-            <SafeAreaView style={[styles.center, { backgroundColor: isDark ? "#444444" : "#fff" }]}>
-                <ActivityIndicator size="large" />
+            <SafeAreaView style={[styles.center, { backgroundColor: screenBgColor }]}>
+                <ActivityIndicator size="large" color={isDark ? mainTextColor : accentColor}/>
             </SafeAreaView>
         );
     }
     if (error) {
         return (
-            <SafeAreaView style={[styles.center, { backgroundColor: isDark ? "#444444" : "#fff" }]}>
-                <Text>{error}</Text>
+            <SafeAreaView style={[styles.center, { backgroundColor: screenBgColor }]}>
+                <Text style={{color: mainTextColor}}>{error}</Text>
             </SafeAreaView>
         );
     }
 
     return (
-        <SafeAreaView style={[styles.safe, { backgroundColor: isDark ? "#444444" : "#fff" }]}>
+        <SafeAreaView style={[styles.safe, { backgroundColor: screenBgColor }]}>
             <ScrollView
                 style={styles.screen}
                 horizontal={false}
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ flexGrow: 1 }}
+                contentContainerStyle={styles.scrollContent}
                 overScrollMode="never"
                 bounces={false}
             >
-
-
-            <View style={styles.topBar}>
+                <View style={styles.topBar}>
                     <TouchableOpacity
                         style={styles.drawer}
                         onPress={() => navigation.openDrawer()}>
-                        <Image
-                            source={require('../assets/MenuIcon.png')}
-                            style={{ width: 24, height: 24 }}
-                        />
+                        <Ionicons name="menu" size={24} color={accentColor} />
                     </TouchableOpacity>
 
                     <View style={styles.searchBar}>
@@ -84,11 +105,16 @@ export default function MainScreen({ navigation }) {
                     </View>
                 </View>
 
-                <Text style={[styles.section, { color: isDark ? "#E5E5E5" : "#000" }]}>Perfect for you</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.container}>
+                <Text style={[styles.section, { color: mainTextColor }]}>Recommended for you</Text>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.horizontalContainer}
+                >
                     {perfect.map(item => (
                         <View key={item.id} style={styles.card}>
                             <SongCard
+                                id={item.id}
                                 title={item.title}
                                 singer={item.artist.name}
                                 imgUrl={item.album.cover}
@@ -98,11 +124,12 @@ export default function MainScreen({ navigation }) {
                     ))}
                 </ScrollView>
 
-                <Text style={[styles.section, { color: isDark ? "#E5E5E5" : "#000" }]}>On Repeat</Text>
+                <Text style={[styles.section, { color: mainTextColor }]}>On Repeat</Text>
                 <View style={styles.cardLine}>
                     {repeat.map(item => (
                         <LineSongCard
                             key={item.id}
+                            id={item.id}
                             title={item.title}
                             singer={item.artist.name}
                             imgUrl={item.album.cover}
@@ -111,19 +138,32 @@ export default function MainScreen({ navigation }) {
                     ))}
                 </View>
 
-                <Text style={[styles.section, { color: isDark ? "#E5E5E5" : "#000" }]}>On Trend</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.container}>
-                    {perfect.map(item => (
-                        <View key={item.id} style={styles.card}>
-                            <SongCard
-                                title={item.title}
-                                singer={item.artist.name}
-                                imgUrl={item.album.cover}
-                                songUrl={item.link}
-                            />
+                <Text style={[styles.section, { color: mainTextColor }]}>On Trend</Text>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.horizontalContainer}
+                >
+                    {trend.length > 0 ? (
+                        trend.map(item => (
+                            <View key={item.id} style={styles.card}>
+                                <SongCard
+                                    id={item.id}
+                                    title={item.title}
+                                    singer={item.artist.name}
+                                    imgUrl={item.album.cover}
+                                    songUrl={item.link}
+                                />
+                            </View>
+                        ))
+                    ) : (
+                        <View style={styles.emptyListMessage}>
+                            <Text style={{color: subTextColor}}>No tracks.</Text>
                         </View>
-                    ))}
+                    )}
                 </ScrollView>
+
+                <View style={{height: 40}}/>
 
             </ScrollView>
         </SafeAreaView>
@@ -135,27 +175,31 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     screen: {
-        paddingTop: 50,
+        flex: 1,
+    },
+    scrollContent: {
+        flexGrow: 1,
+        paddingTop: 20,
     },
     center: {
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
     },
-    container: {
+    horizontalContainer: {
         flexDirection: "row",
         paddingLeft: 16,
     },
     card: {
+        width: SMALL_CARD_WIDTH,
         marginRight: 12,
     },
     cardLine: {
         marginLeft: 12,
     },
     section: {
-        fontFamily: 'Inter',
         fontWeight: '700',
-        fontSize: 14,
+        fontSize: 16,
         paddingBottom: 16,
         paddingLeft: 16,
         paddingTop: 24,
@@ -164,7 +208,6 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         paddingHorizontal: 16,
-        paddingTop: 20,
         width: "100%",
         overflow: "hidden",
     },
@@ -175,5 +218,9 @@ const styles = StyleSheet.create({
     drawer: {
         width: 24,
         paddingLeft: 5,
+    },
+    emptyListMessage: {
+        paddingHorizontal: 16,
+        paddingVertical: 10,
     }
 });
